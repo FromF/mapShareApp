@@ -63,14 +63,7 @@ class ShareMapViewModel: ObservableObject {
                 var sendData = Dictionary<String,Any>()
                 //既定のパラメータに設定を行います
                 sendData["to"] = "topics/ios"
-                sendData["priority"] = "high"
                 sendData["content_available"] = true
-                sendData["alert"] = [:]
-
-                //"data"以下のネスト用
-                var dataDic = Dictionary<String,Any>()
-                dataDic["testData"] = "TestJSON"
-                sendData["data"] = dataDic
 
                 //JSONデータの生成
                 let sendJsonData = try JSONSerialization.data(withJSONObject: sendData, options: [])
