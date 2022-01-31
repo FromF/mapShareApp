@@ -49,6 +49,7 @@ class CoreLocation: NSObject ,ObservableObject {
     
     func start() {
         if status == .authorizedAlways {
+            debugLog("")
             //検出範囲 kCLDistanceFilterNoneにすると最高精度になる。通常は10とか100にするとよい
             locationManager.distanceFilter = kCLDistanceFilterNone
             locationManager.startUpdatingLocation()
@@ -56,6 +57,7 @@ class CoreLocation: NSObject ,ObservableObject {
     }
     
     func stop() {
+        debugLog("")
         locationManager.stopUpdatingLocation()
     }
     
