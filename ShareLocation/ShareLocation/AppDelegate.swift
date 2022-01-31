@@ -89,7 +89,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let coreLocation = CoreLocation.shared
         coreLocation.oneShot()
         
-        while true {
+        for _ in 0...10 {
             if coreLocation.isUpdate , let coodinate = coreLocation.coordinate {
                 if shareLocations.write(coordinate: coodinate) {
                     break
