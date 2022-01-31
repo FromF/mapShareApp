@@ -62,7 +62,7 @@ class ShareMapViewModel: ObservableObject {
                 //送信するJSONデータの設定
                 var sendData = Dictionary<String,Any>()
                 //既定のパラメータに設定を行います
-                sendData["to"] = "topics/ios"
+                sendData["to"] = "/topics/ios"
                 sendData["content_available"] = true
 
                 //JSONデータの生成
