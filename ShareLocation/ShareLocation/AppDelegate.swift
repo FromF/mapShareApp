@@ -84,21 +84,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     
     func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
-        debugLog("PUSH arrived. \(userInfo)")
-        let shareLocations = ShareLocations.shared
-        let coreLocation = CoreLocation.shared
-        coreLocation.oneShot()
-        
-        for _ in 0...10 {
-            if coreLocation.isUpdate , let coodinate = coreLocation.coordinate {
-                if shareLocations.write(coordinate: coodinate) {
-                    break
+        DispatchQueue.global().async {
+            debugLog("PUSH arrived. \(userInfo)")
+            let shareLocations = ShareLocations.shared
+            let coreLocation = CoreLocation.shared
+            coreLocation.oneShot()
+            
+            for _ in 0..<30 {
+                if coreLocation.isUpdate , let coodinate = coreLocation.coordinate {
+                    if shareLocations.write(coordinate: coodinate) {
+                        break
+                    }
                 }
+                sleep(1)
             }
-            sleep(1)
+            
+            debugLog("PUSH end")
+            completionHandler(.noData)
         }
-        
-        completionHandler(.noData)
     }
     
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {

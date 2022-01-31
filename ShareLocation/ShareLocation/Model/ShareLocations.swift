@@ -8,6 +8,7 @@
 import Foundation
 import CoreLocation
 import Firebase
+import UIKit
 
 protocol ShareLocationsDelegate: AnyObject {
     func locationUpdate(location: ShareLocation)
@@ -39,6 +40,8 @@ class ShareLocations: NSObject {
                 "uuid" : uuid,
                 "latitude" : coordinate.latitude,
                 "longitude" : coordinate.longitude,
+                "date" : FieldValue.serverTimestamp(),
+                "name" : UIDevice.current.name,
             ]
             let db = Firestore.firestore()
             db.collection("users").document("\(uuid)").setData(param)

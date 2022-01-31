@@ -25,6 +25,7 @@ class CoreLocation: NSObject ,ObservableObject {
         return locationManager.authorizationStatus
     }
     private var isOneShot = false
+    private var isStarted = false
     
     override init() {
         super.init()
@@ -53,18 +54,25 @@ class CoreLocation: NSObject ,ObservableObject {
             //検出範囲 kCLDistanceFilterNoneにすると最高精度になる。通常は10とか100にするとよい
             locationManager.distanceFilter = kCLDistanceFilterNone
             locationManager.startUpdatingLocation()
+            isStarted = true
         }
     }
     
     func stop() {
         debugLog("")
         locationManager.stopUpdatingLocation()
+        isStarted = false
     }
     
     func oneShot() {
-        isOneShot = true
-        isUpdate = false
-        start()
+        debugLog("oneShot start")
+        if isStarted , let _ = coordinate {
+            isUpdate = true
+        } else {
+            isOneShot = true
+            isUpdate = false
+            start()
+        }
     }
     
 }
@@ -86,6 +94,7 @@ extension CoreLocation: CLLocationManagerDelegate {
                 stop()
                 isOneShot = false
                 isUpdate = true
+                debugLog("oneShot end")
             }
         }
     }
