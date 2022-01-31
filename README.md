@@ -1,7 +1,31 @@
 # mapShareApp
 位置情報をシェアするアプリ
 
+## 概要
 
+Silent NotificationとBackground Mode-Location Updateを使ってSilent Notificationをトリガーにして位置情報をバックグラウンドで取得し、Firebase CloudStoreに位置情報を保持するプロジェクトです。
+
+
+
+## 技術要素
+
+### FCMからSilent Noticaitonを通知する
+
+curlコマンドで下記を実行するとSilent Noticaitonが発行できる
+
+```
+curl --header "Authorization: key=[SERVER_KEY]" --header Content-Type:"application/json" https://fcm.googleapis.com/fcm/send -d "{\"to\": \"/topics/ios\",\"content_available\":true}"
+```
+
+
+
+### Background Mode-Location Updateするとき
+
+`CLLocationManager()`のプロパティー`allowsBackgroundLocationUpdates`を`true`にする必要がある
+
+
+
+## 参考
 
 - [【iOS】Firebase Cloud Messaging を使って Silent Notification 受信する](https://qiita.com/kenny_J_7/items/e3f659f7b54492c53bd6)
 - [【iOS10】Firebaseでサイレント通知を行う](https://qiita.com/shiba1014/items/099f8e7aa37d5e2540da)
