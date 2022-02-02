@@ -20,7 +20,7 @@ class ShareLocations: NSObject {
     
     var locations: [ShareLocation] = []
     
-    private var uuid:String?
+    private(set) var uuid:String?
     private var listenerUsers: ListenerRegistration!
     
     override init() {

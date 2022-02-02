@@ -64,6 +64,16 @@ class ShareMapViewModel: ObservableObject {
                 //既定のパラメータに設定を行います
                 sendData["to"] = "/topics/ios"
                 sendData["content_available"] = true
+                
+                var data = Dictionary<String,Any>()
+                data["uid"] = shareLocations.uuid ?? "none"
+                
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateStyle = .short
+                dateFormatter.timeStyle = .short
+                
+                data["date"] = dateFormatter.string(from: Date())
+                sendData["data"] = data
 
                 //JSONデータの生成
                 let sendJsonData = try JSONSerialization.data(withJSONObject: sendData, options: [])
