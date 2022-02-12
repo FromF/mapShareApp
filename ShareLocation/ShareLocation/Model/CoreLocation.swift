@@ -6,32 +6,28 @@
 //
 
 import SwiftUI
+import Combine
 import CoreLocation
 
-protocol CoreLocationDelegate: AnyObject {
-    func locationUpdate(coordinate: CLLocationCoordinate2D)
+enum LocationManagerError: Error {
+    case authorizationDenied
 }
-
 
 class CoreLocation: NSObject ,ObservableObject {
     static let shared = CoreLocation()
-    weak var delegate: CoreLocationDelegate?
-    var isUpdate = false
-    var coordinate: CLLocationCoordinate2D?
-    
+    private let locationSubject: PassthroughSubject<CLLocation, Error> = .init()
     private let locationManager = CLLocationManager()
     private var status: CLAuthorizationStatus {
         debugLog("\(locationManager.authorizationStatus.rawValue)")
         return locationManager.authorizationStatus
     }
-    private var isOneShot = false
-    private var isStarted = false
     
     override init() {
         super.init()
         
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
+        locationManager.distanceFilter = kCLDistanceFilterNone
         //バックグランド中に位置情報を取得するか
         locationManager.allowsBackgroundLocationUpdates = true
         //システムが場所の更新を一時停止できるかどうか
@@ -48,33 +44,16 @@ class CoreLocation: NSObject ,ObservableObject {
         }
     }
     
-    func start() {
-        if status == .authorizedAlways {
-            debugLog("")
-            //検出範囲 kCLDistanceFilterNoneにすると最高精度になる。通常は10とか100にするとよい
-            locationManager.distanceFilter = kCLDistanceFilterNone
-            locationManager.startUpdatingLocation()
-            isStarted = true
-        }
-    }
-    
-    func stop() {
-        debugLog("")
-        locationManager.stopUpdatingLocation()
-        isStarted = false
-    }
-    
-    func oneShot() {
+    func oneShot()  -> AnyPublisher<CLLocation, Error> {
         debugLog("oneShot start")
-        if isStarted , let _ = coordinate {
-            isUpdate = true
+        if status == .authorizedWhenInUse || status == .authorizedAlways {
+            locationManager.startUpdatingLocation()
         } else {
-            isOneShot = true
-            isUpdate = false
-            start()
+            locationSubject.send(completion: .failure(LocationManagerError.authorizationDenied))
         }
+        
+        return locationSubject.eraseToAnyPublisher()
     }
-    
 }
 
 
@@ -84,18 +63,9 @@ extension CoreLocation: CLLocationManagerDelegate {
     }
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.first {
-            coordinate = location.coordinate
+            locationManager.stopUpdatingLocation()
             debugLog(location)
-            DispatchQueue.main.async { [weak self] in
-                self?.delegate?.locationUpdate(coordinate: location.coordinate)
-            }
-            
-            if isOneShot {
-                stop()
-                isOneShot = false
-                isUpdate = true
-                debugLog("oneShot end")
-            }
+            locationSubject.send(location)
         }
     }
 }

@@ -8,6 +8,7 @@
 import SwiftUI
 import CoreLocation
 import MapKit
+import Combine
 
 class ShareMapViewModel: ObservableObject {
     /// 緯度経度
@@ -16,21 +17,32 @@ class ShareMapViewModel: ObservableObject {
 
     private let coreLocation = CoreLocation.shared
     private let shareLocations = ShareLocations.shared
-    private var isUpdated = false
-    
+    private var cancellables = Set<AnyCancellable>()
+
     init() {
         shareLocations.delegate = self
     }
     
     func onAppear() {
-        coreLocation.delegate = self
-        isUpdated = true
         coreLocation.oneShot()
+            .sink { completion in
+                switch completion {
+                case .finished:
+                    break
+                case .failure:
+                    errorLog("location error")
+                }
+            } receiveValue: { [weak self] location in
+                let coordinate = location.coordinate
+                debugLog(coordinate)
+                self?.region.center.longitude = coordinate.longitude
+                self?.region.center.latitude = coordinate.latitude
+                _ = self?.shareLocations.write(coordinate: coordinate)
+            }
+            .store(in: &cancellables)
     }
     
     func onDisappear() {
-        coreLocation.stop()
-        coreLocation.delegate = nil
     }
     
     func requestShare() {
@@ -102,24 +114,6 @@ class ShareMapViewModel: ObservableObject {
             }
         }
 
-    }
-}
-
-extension ShareMapViewModel: CoreLocationDelegate {
-    func locationUpdate(coordinate: CLLocationCoordinate2D) {
-        DispatchQueue.global().async { [weak self] in
-            while true {
-                if self?.shareLocations.write(coordinate: coordinate) ?? true {
-                    break
-                }
-                sleep(1)
-            }
-        }
-        if isUpdated {
-            isUpdated = false
-            region.center.longitude = coordinate.longitude
-            region.center.latitude = coordinate.latitude
-        }
     }
 }
 

@@ -6,15 +6,15 @@
 //
 
 import UIKit
-    import Firebase
+import Firebase
 import UserNotifications
 import FirebaseMessaging
+import Combine
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
-
-
-
+    private var cancellables = Set<AnyCancellable>()
+    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         
@@ -84,24 +84,30 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     
     func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
-        DispatchQueue.global().async {
-            debugLog("PUSH arrived. \(userInfo)")
-            let shareLocations = ShareLocations.shared
-            let coreLocation = CoreLocation.shared
-            coreLocation.oneShot()
-            
-            for _ in 0..<30 {
-                if coreLocation.isUpdate , let coodinate = coreLocation.coordinate {
-                    if shareLocations.write(coordinate: coodinate) {
-                        break
-                    }
+        var completionHandler: ((UIBackgroundFetchResult) -> Void)? = completionHandler
+        
+        debugLog("PUSH arrived. \(userInfo)")
+        let coreLocation = CoreLocation.shared
+        coreLocation.oneShot()
+            .sink { completion in
+                switch completion {
+                case .finished:
+                    break
+                    
+                case .failure:
+                    debugLog("PUSH end(failuer)")
+                    completionHandler?(.noData)
+                    completionHandler = nil
                 }
-                sleep(1)
+            } receiveValue: { location in
+                let coordinate = location.coordinate
+                let shareLocations = ShareLocations.shared
+                _ = shareLocations.write(coordinate: coordinate)
+                debugLog("PUSH end(post)")
+                completionHandler?(.noData)
+                completionHandler = nil
             }
-            
-            debugLog("PUSH end")
-            completionHandler(.noData)
-        }
+            .store(in: &self.cancellables)
     }
     
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
